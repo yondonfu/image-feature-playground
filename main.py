@@ -1,6 +1,6 @@
 from modal import App, Image, gpu, build, enter, web_endpoint, method, Mount
-from typing import Union, List, Annotated, Optional
-from fastapi import UploadFile, File
+from typing import Union, List, Annotated
+from fastapi import UploadFile, File, Form
 from pydantic import BaseModel
 import base64
 import io
@@ -232,7 +232,6 @@ class Kandinsky:
 
     @method()
     def get_features(self, image_embeds: list, n_features: int = 3):
-        print(n_features)
         image_embeds = torch.tensor(image_embeds).to(
             get_torch_device(), dtype=torch.float16
         )
@@ -323,8 +322,8 @@ class ImagePreprocessResult(BaseModel):
 @web_endpoint(method="POST")
 async def preprocess_image(
     image: Annotated[UploadFile, File()],
-    n_features: Optional[int] = 3,
-    generate_icon: Optional[bool] = True,
+    n_features: Annotated[int, Form()] = 3,
+    generate_icon: Annotated[bool, Form()] = True,
 ) -> ImagePreprocessResult:
     image_bytes = await image.read()
 
@@ -332,7 +331,6 @@ async def preprocess_image(
     image_embeds = CLIP().embed_image.remote(image_file)
     negative_image_embeds = CLIP().embed_zero.remote()
     # Get top activating `n_features` features
-    print(n_features)
     features = Kandinsky().get_features.remote(image_embeds, n_features)
     inv_latents = Kandinsky().invert.remote(
         image_file, image_embeds, negative_image_embeds
