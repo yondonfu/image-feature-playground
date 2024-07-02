@@ -1,7 +1,5 @@
 This repo contains code for experimenting with manipulating features extracted from models to make semantic edits to images. At the moment, the techniques used are largely described in [this post](https://www.lesswrong.com/posts/Quqekpvx8BGMMcaem/interpreting-and-steering-features-in-images).
 
-The inference code is currently deployed using [Modal](https://modal.com/), but relevant parts can also be extracted to run elsewhere.
-
 # Deploy to Modal
 
 ```
@@ -10,7 +8,7 @@ MODAL_IMAGE_BUILDER_VERSION=2024.04 modal deploy main.py
 
 The `MODAL_IMAGE_BUILDER_VERSION=2024.04` env var is required while the `2024.04` release of the Modal image builder is still in preview.
 
-# Endpoints
+## Endpoints
 
 After deploying to Modal, you should have the following endpoints available.
 
@@ -25,7 +23,7 @@ The thinking for the workflow here is:
   - Optionally generate an icon for each feature that can be displayed in a UI.
 - Use the CLIP image embedding and inverted latents for new image generation while manipulating the values of specific CLIP features of interest.
 
-## preprocess_image
+### preprocess_image
 
 Parameters:
 
@@ -48,7 +46,9 @@ Response:
         "data:image/png;base64,...",
       ]
     }
-  ]
+  ],
+  "height": 768,
+  "width": 768
 }
 ```
 
@@ -66,7 +66,7 @@ const res = await fetch(PREPROCESS_IMAGE_URL, {
 
 For more details see the `preprocess_image()` function in `main.py`.
 
-## generate_image
+### generate_image
 
 Parameters:
 
@@ -74,6 +74,8 @@ Parameters:
 - `inv_latents`: The `inv_latents` returned from preprocessing.
 - `feature_idx`: A list of indices of the features to set values for.
 - `feature_val`: A list of values for each feature.
+- `height`: The `height` returned from preprocessing.
+- `width`: The `width` returned from preprocessing.
 
 Response:
 
@@ -91,6 +93,8 @@ const params = {
   inv_latents: ...
   feature_idx: ...
   feature_val: ...
+  height: ...
+  width: ...
 };
 const res = await fetch(GENERATE_IMAGE_URL, {
   method: "POST",
@@ -102,3 +106,12 @@ const res = await fetch(GENERATE_IMAGE_URL, {
 ```
 
 For more details see the `generate_image()` function in `main.py`.
+
+# Deploy Locally
+
+```
+pip install -r requirements.txt
+fastapi dev app.py
+```
+
+The same endpoints from above are available at `/preprocess_image` and `/generate_image`. The OpenAPI docs can be viewed at `/docs`.
