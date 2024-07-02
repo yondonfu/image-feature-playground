@@ -308,6 +308,8 @@ class ImagePreprocessResult(BaseModel):
     image_embeds: list
     inv_latents: list
     features: List[CLIPFeature]
+    height: int
+    width: int
 
 
 @app.function(
@@ -328,12 +330,13 @@ async def preprocess_image(
     image_bytes = await image.read()
 
     image_file = PIL.Image.open(io.BytesIO(image_bytes))
+    width, height = image_file.size
     image_embeds = CLIP().embed_image.remote(image_file)
     negative_image_embeds = CLIP().embed_zero.remote()
     # Get top activating `n_features` features
     features = Kandinsky().get_features.remote(image_embeds, n_features)
     inv_latents = Kandinsky().invert.remote(
-        image_file, image_embeds, negative_image_embeds
+        image_file, image_embeds, negative_image_embeds, height=height, width=width
     )
 
     if generate_icon:
@@ -372,6 +375,8 @@ async def preprocess_image(
         "image_embeds": image_embeds,
         "inv_latents": inv_latents,
         "features": features,
+        "height": height,
+        "width": width
     }
 
 
@@ -380,6 +385,8 @@ class ImageGenerateParams(BaseModel):
     inv_latents: list
     feature_idx: List[int]
     feature_val: List[float]
+    height: int = 768
+    width: int = 768
 
 
 @app.function(image=base_image)
