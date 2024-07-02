@@ -1,0 +1,6 @@
+git+https://github.com/yondonfu/diffusers.git@kandinsky-ddim-inverse
+Pillow
+transformers
+accelerate
+huggingface_hub
+fastapi
